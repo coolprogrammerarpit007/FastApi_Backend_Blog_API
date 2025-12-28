@@ -14,3 +14,14 @@ class ShowBlog(Blog):
     body:str
     
     
+    
+    
+class User(BaseModel):
+    name:str
+    email:str
+    password:str
+    
+class ShowUser(User):
+    status:True
+    name:str
+    email:str

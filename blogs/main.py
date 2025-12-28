@@ -1,9 +1,11 @@
 from fastapi import FastAPI,Depends,status,Response,HTTPException
-from schemas import Blog,ShowBlog
+from schemas import Blog,ShowBlog,User,ShowUser
 import models
 from database import engine,SessionLocal
 from sqlalchemy.orm import Session
 from typing import List
+from passlib.context import CryptContext
+
 
 
 app = FastAPI()
@@ -20,6 +22,8 @@ def get_db():
         db.close()
 
     
+    
+
     
 @app.post("/blogs",status_code=status.HTTP_201_CREATED)
 
@@ -83,3 +87,29 @@ def get_blog_details(id:int,response:Response,db:Session=Depends(get_db)):
         body = blog.body
     )
     
+    
+# ************************  User API ***********************
+
+pwd_cxt = CryptContext(schemes=["bcrypt"],deprecated="auto")
+@app.post("/user",status_code=201)
+
+def create_user(user:User,db:Session = Depends(get_db)):
+    hashed_password = pwd_cxt.hash(user.password)
+    new_user = models.User(name=user.name,email=user.email,password=hashed_password)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    return new_user
+
+@app.get("/user/{id}",response_model=ShowUser)
+
+
+def get_user_Details(id:int,db:Session = Depends(get_db)):
+    user_details = db.query(models.User).filter(models.User.id == id).first()
+    
+    return ShowUser(
+        status=True,
+        name=user_details.name,
+        email=user_details.email
+    )
