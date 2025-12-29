@@ -1,10 +1,13 @@
 from fastapi import FastAPI,Depends,status,Response,HTTPException
-from schemas import Blog,ShowBlog,UserBase,ShowUser,UserCreate
+from fastapi.security import OAuth2PasswordRequestForm
+from schemas import Blog,ShowBlog,UserBase,ShowUser,UserCreate,Token,TokenData,LoginResponse
 import models
-from database import engine,SessionLocal
+from database import engine,SessionLocal,get_db
 from sqlalchemy.orm import Session
 from typing import List
 from passlib.context import CryptContext
+from auth import verify_password,create_access_token,get_current_user
+
 
 
 
@@ -13,13 +16,7 @@ app = FastAPI()
 #  this will automatically create table when application runs
 models.Base.metadata.create_all(engine)
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-        
-    finally:
-        db.close()
+
 
     
     
@@ -27,7 +24,7 @@ def get_db():
     
 @app.post("/blogs",status_code=status.HTTP_201_CREATED)
 
-def create_blog(blog:Blog,db:Session = Depends(get_db)):
+def create_blog(blog:Blog,db:Session = Depends(get_db),current_user: models.User = Depends(get_current_user) ):
     new_blog = models.Blog(title=blog.title,body=blog.body)
     db.add(new_blog)
     db.commit()
@@ -132,3 +129,26 @@ def get_user_Details(id:int,db:Session = Depends(get_db)):
         email=user_details.email,
         status=True  # or compute it based on some logic
     )
+    
+    
+# ***********************  Login Authentication API ****************
+
+@app.post("/login",response_model=Token)
+
+def login(form_data:OAuth2PasswordRequestForm = Depends(),db:Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == form_data.username).first()
+    
+    if not user or not verify_password(form_data.password ,user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        
+    access_token = create_access_token(data={"sub": user.email})
+    return LoginResponse(
+        message = "Login Successful",
+        status = True,
+        access_token = access_token,
+    )
+    
