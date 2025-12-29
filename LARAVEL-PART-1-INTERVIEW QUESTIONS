@@ -1,0 +1,46 @@
+ARTISAN IS LARAVEL'S COMMAND LINE INTERFACE WHICH MAKES DEVELOPMENT SMOOTHER
+
+MIGRATION:- MIGRATIONS ARE VERSION CONTROL FOR YOUR DATABASE
+
+
+facades in LARAVEL
+
+facades provide us static interfaces to classes they provide a convenient way of using services without writing to use long class names
+
+service providers in LARAVEL
+
+
+SERVICE PROVIDERS BOOTSTRAPS ALL SERVICES IN OUR APPLICATIONS
+INCLUDING CORE AND USER SERVICES
+
+
+LARAVEL REQUEST LIFECYCLE
+
+THE REQUEST FIRST ENTERS THE public/index.php file
+
+it's passed to the HTTP KERNAL(BROWSER) OR CONSOLE KERNAL accordingly to whom request is for then it is passed to middleware after that routing determines the appropriate controller action to execute, controller logic is executed then repsonse is returned after that post response middleware is executed
+
+
+
+SERVICE PROVIDERS IN LARAVEL
+
+CERNTRAL CONFIGURATION POINT FOR LARAVEL APPLICATIONS
+BOOTSTRAPS SERVCIES AND BINDS THEM TO SERVICE CONTAINER
+REGISTER EVENT LISTENERS,MIDDLEWARES AND REOUTES
+
+
+DEPENDENCY INJECTION AND SERVICE CONTAINERS
+
+DEPENDENCY INJECTION provides external DEPENDENCY to objects
+
+the service containsers manage class DEPENDENCYs and performs DEPENDENCY INJECTION
+
+
+policy vs gate in LARAVEL
+
+POLICY:- AUTHORIZATION LOGIC TIED TO A PARTICULAR MODEL
+GATE:- GENERAL AUTHORIZATION LOGIC NOT TIED TO ANY MODEL
+
+
+LARAVEL'S MACROS ALLOWS YOU TO ADD CUSTOM METHODS INTO YOUR BUILT IN CLASSES E.G COLLECCTION,repsonse AND REGISTER IN APPSERVICEPROVIDER.php
+
