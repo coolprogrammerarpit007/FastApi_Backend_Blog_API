@@ -1,5 +1,5 @@
 from fastapi import FastAPI,Depends,status,Response,HTTPException
-from schemas import Blog,ShowBlog,User,ShowUser
+from schemas import Blog,ShowBlog,UserBase,ShowUser,UserCreate
 import models
 from database import engine,SessionLocal
 from sqlalchemy.orm import Session
@@ -91,16 +91,31 @@ def get_blog_details(id:int,response:Response,db:Session=Depends(get_db)):
 # ************************  User API ***********************
 
 pwd_cxt = CryptContext(schemes=["bcrypt"],deprecated="auto")
-@app.post("/user",status_code=201)
+@app.post("/user",status_code=201,response_model=ShowUser)
 
-def create_user(user:User,db:Session = Depends(get_db)):
+def create_user(user:UserCreate,db:Session = Depends(get_db)):
+    # check if user already exist
+    existing_user = db.query(models.User).filter(models.User.email == user.email).first()
+    
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    # Hashed Password   
     hashed_password = pwd_cxt.hash(user.password)
+    
+    #  create new user
     new_user = models.User(name=user.name,email=user.email,password=hashed_password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     
-    return new_user
+    return ShowUser(
+        name=user.name,
+        email=user.email,
+        status=True  # or compute it based on some logic
+    )
 
 @app.get("/user/{id}",response_model=ShowUser)
 
@@ -108,8 +123,12 @@ def create_user(user:User,db:Session = Depends(get_db)):
 def get_user_Details(id:int,db:Session = Depends(get_db)):
     user_details = db.query(models.User).filter(models.User.id == id).first()
     
+    if not user_details:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,details="User not found!")
+    
     return ShowUser(
-        status=True,
+        id=user_details.id,
         name=user_details.name,
-        email=user_details.email
+        email=user_details.email,
+        status=True  # or compute it based on some logic
     )

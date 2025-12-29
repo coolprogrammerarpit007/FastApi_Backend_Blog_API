@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,ConfigDict
 from typing import Optional
 
 class Blog(BaseModel):
@@ -16,12 +16,18 @@ class ShowBlog(Blog):
     
     
     
-class User(BaseModel):
+class UserBase(BaseModel):  # Common Fields
     name:str
     email:str
+    
+    
+class UserCreate(UserBase): # Used when creating a user
     password:str
     
-class ShowUser(User):
-    status:True
-    name:str
-    email:str
+    
+class ShowUser(UserBase): # what we return to the user
+    id:Optional[int] = None
+    status:bool
+    
+    model_config = ConfigDict(from_attributes=True)
+    
