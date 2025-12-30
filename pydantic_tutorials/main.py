@@ -7,7 +7,7 @@ import json
 
 class User(BaseModel):
     # to accept data both as field name and alias
-    model_config=ConfigDict(populate_by_name=True,str=True)
+    model_config=ConfigDict(populate_by_name=True,str=True,validate_assignment=True)
     # uid:Annotated[int,Field(gt=0)] = 786
     uid:UUID = Field(alias="id",default_factory=uuid4)
     name:Annotated[str,Field(min_length=3,max_length=20)]
