@@ -1,7 +1,9 @@
-from fastapi import FastAPI,Query
-from services.product import get_all_products
+from fastapi import FastAPI,Query,Path,HTTPException 
+from services.product import get_all_products,add_product
 from schemas import Product
 import json
+from uuid import UUID,uuid4
+from datetime import datetime
 
 app = FastAPI()
 
@@ -75,6 +77,27 @@ def list_products(
         "limit":limit,
         "data":products
     }
+    
+    
+# get product by Id API
+
+@app.get("/products/{id}")
+
+def get_product_by_id(id:str=Path(
+    ...,
+    min_length=36,
+    max_length=36,
+    description="Valid Product Id with length of 36 chars"
+)):
+    products = get_all_products()
+    
+    product = [product for product in products if product["id"] == id]
+    
+    if not product:
+        raise HTTPException(status_code=404,detail="Product not found!")
+    
+    return product[0]
+        
         
     
     
@@ -82,6 +105,13 @@ def list_products(
 
 def create_new_product(product:Product):
     # convert it into dictionary to doing any modifications
-    product_dict = product.model_dump()
-    print(product_dict)
-    return product
+    product_dict = product.model_dump(mode="json")
+    product_dict["id"] = str(uuid4())
+    product_dict["created_at"] = datetime.utcnow().isoformat() + "Z"
+    try:
+        add_product(product_dict)
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    return product.model_dump(mode="json")
