@@ -28,3 +28,32 @@ def add_product(product:Dict) -> Dict:
     products.append(product)
     save_product(products)
     return product
+
+def remove(product_id:str)->str:
+    products = get_all_products()
+    for index,item in enumerate(products):
+        if str(item["id"]) == str(product_id):
+            deleted = products.pop(index)
+            save_product(products)
+            return {"message":f"Product with {product_id} deleted successfully","product":deleted}
+        
+        
+def change_product(id:str,updated_product:dict):
+    products = get_all_products()
+    
+    for index,product in enumerate(products):
+        if product["id"] == id:
+            for key,value in updated_product.items():
+                if value is None:
+                    continue
+                
+                if isinstance(value, dict) and isinstance(product.get(key), dict):
+                    product[key].update(value)
+                else:
+                    product[key] = value
+                    
+            products[index] = product
+            save_product(products)
+            return product
+        
+    raise ValueError("Product not found!")
