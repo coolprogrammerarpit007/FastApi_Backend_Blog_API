@@ -1,82 +1,87 @@
-from fastapi import FastAPI,HTTPException,Query,Path
+from fastapi import FastAPI,Query
 from services.product import get_all_products
 from schemas import Product
+import json
 
 app = FastAPI()
 
 @app.get("/")
 
-def root():
-    return {"message":"Welcome to FastAPI"}
-
-
-# @app.get("/products/{id}")
-
-# def get_products(id:int):
-#     return {"message":f"Product with the {id} fetched successfully!"}
-# @app.get("/products")
-
-# def get_products():
-#     return get_all_products()
+def create_root():
+    return {
+        "message":"Fastapi working smoothly, you can start working!"
+    }
+    
+    
 
 
 
-        
-@app.get("/products")
+# API to load all the products
+@app.get("/products",status_code=200)
+def list_products(
+    name:str = Query(default=None,
+                     min_length=1,max_length=50,
+                     description="Search Any Product by Name",
+                     examples="Shirts"
+                     ),
+    sort_by_price:bool = Query(
+        default=False,
+        description="Sort products by price",
+        examples=True
+    ),
+    order:str = Query(
+        default="asc",
+        description="Sort order when sort_by_price=True"
+    ),
+    limit:int = Query(
+        default=10,
+        ge=1,
+        le=100,
+        description="Number of items to return"
+    ),
+    offset:int = Query(
+        default=0,
+        ge=0,
+        description="Product Offset"
+    )
+    ):
+    products = get_all_products()
 
-def fetch_product(name:str = Query(default=None,min_length=2,max_length=50,description="enter product name"),sort_by_price:bool = Query(default=False,description="sort products by price"),order:str=Query(default="asc",description="sort products by ascending or descending order"),limit:int = Query(default=5,ge=1,le=100,description="Number of Items to return"),offset:int = Query(default=0,ge=0,description="Pagination Offset")):
     if not name:
         return {
             "status":True,
-            "message":"ALL products are given",
-            "data":get_all_products()
+            "message":"All products found",
+            "products-data":products
         }
         
-    products = get_all_products()
+    product_item = name.strip().lower()
+    products = [product for product in products if product_item in product.get("name","").lower()]
     
+    message = f"Search results for {product_item}" if products else "No Item Found!"
+    status = True if products else False
     
-    product_name = name.strip().lower()
-        
-    if len(products) > 1:
-        products = [product for product in products if product_name in product.get("name","").lower()]
-        
-        
-        
-    if not products:
-        raise HTTPException(status_code=404,detail="No Products are found!")
-    
-    if sort_by_price:
+    if(products and sort_by_price):
         reverse = order == "desc"
         products = sorted(products,key=lambda product:product.get("price",0),reverse=reverse)
         
+    if(limit):
+        products = products[offset:limit+offset]
         
+    total_products = len(products)
     return {
-            "status":True,
-            "message":"Products fetched successfully!",
-            "total_products":len(products),
-            "data" : products[offset:limit+offset],
-        }
-    
-    
-    
-@app.get("/product/{id}")
-
-def get_product_detail(id:str = Path(...,min_length=36,max_length=36,description="UUID of the product")):
-    products = get_all_products()
-    
-    product = [product for product in products if product["id"] == id][0]
-    
-    if not product:
-        raise HTTPException(status_code=404,detail="Product Not Found!")
-    
-    return {
-        "status":True,
-        "message":"Product found!",
-        "data":product
+        "status":status,
+        "message":message,
+        "total_products":total_products,
+        "limit":limit,
+        "data":products
     }
+        
     
     
 @app.post("/products",status_code=201)
 
-def create_product(product:Product):
-    pass
+def create_new_product(product:Product):
+    # convert it into dictionary to doing any modifications
+    product_dict = product.model_dump()
+    print(product_dict)
+    return product
